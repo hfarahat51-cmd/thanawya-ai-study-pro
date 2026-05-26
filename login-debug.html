@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>اختبار تسجيل الدخول - Thanawya AI Study Pro</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      margin: 0;
+      padding: 20px;
+      direction: rtl;
+    }
+
+    .box {
+      background: white;
+      max-width: 430px;
+      margin: 40px auto;
+      padding: 25px;
+      border-radius: 18px;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.12);
+      text-align: center;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      box-sizing: border-box;
+      font-size: 15px;
+      direction: ltr;
+      text-align: left;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 10px;
+      background: #111827;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .secondary { background: #2563eb; }
+    .danger { background: #dc2626; }
+
+    #message {
+      margin-top: 15px;
+      min-height: 22px;
+      color: #111827;
+      background: #f3f4f6;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 14px;
+      line-height: 1.8;
+      text-align: right;
+      white-space: pre-wrap;
+    }
+
+    .ok { color: #047857; font-weight: bold; }
+    .bad { color: #b91c1c; font-weight: bold; }
+
+    .note {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #9a3412;
+      padding: 10px;
+      border-radius: 10px;
+      margin-top: 12px;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>Thanawya AI Study Pro</h2>
+  <p>نسخة اختبار لتسجيل الدخول وإنشاء الحساب</p>
+
+  <input id="email" type="email" placeholder="email@example.com" />
+  <input id="password" type="password" placeholder="Password - 6 characters minimum" />
+
+  <button id="loginBtn">تسجيل دخول</button>
+  <button id="signupBtn" class="secondary">إنشاء حساب جديد</button>
+  <button id="checkBtn" class="danger">اختبار الاتصال بـ Supabase</button>
+
+  <div class="note">
+    لو ضغطت على الأزرار ومفيش أي رسالة ظهرت تحت، يبقى JavaScript مش شغال أو الملف مرفوع غلط.
+  </div>
+
+  <div id="message">جاهز للاختبار...</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = "https://jbwqvlssznqldgobhfrz.supabase.co/rest/v1/";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impid3F2bHNzem5xbGRnb2JoZnJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjcxNTcsImV4cCI6MjA5NTQwMzE1N30.FgZHutH0GbXjM4fhhN7JgfIBZKL6PzjSzflGb8nK8-Q";
+let supabaseClient = null;
+
+function msg(text, type = "") {
+  const el = document.getElementById("message");
+  el.textContent = text;
+  if (type === "ok") el.className = "ok";
+  else if (type === "bad") el.className = "bad";
+  else el.className = "";
+}
+
+function initSupabase() {
+  try {
+    if (!window.supabase) {
+      msg("خطأ: مكتبة Supabase لم يتم تحميلها. تأكد أن الإنترنت شغال وأن الصفحة مرفوعة صح.", "bad");
+      return false;
+    }
+
+    if (SUPABASE_URL.includes("PUT_YOUR") || SUPABASE_ANON_KEY.includes("PUT_YOUR")) {
+      msg("خطأ: لم يتم وضع بيانات Supabase. افتح الملف وغير SUPABASE_URL و SUPABASE_ANON_KEY.", "bad");
+      return false;
+    }
+
+    if (!SUPABASE_URL.startsWith("https://") || !SUPABASE_URL.includes(".supabase.co")) {
+      msg("خطأ: SUPABASE_URL شكله غلط. لازم يكون مثل: https://xxxx.supabase.co", "bad");
+      return false;
+    }
+
+    if (SUPABASE_ANON_KEY.length < 50) {
+      msg("خطأ: SUPABASE_ANON_KEY شكله ناقص أو غلط.", "bad");
+      return false;
+    }
+
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return true;
+  } catch (e) {
+    msg("خطأ أثناء تشغيل Supabase: " + e.message, "bad");
+    return false;
+  }
+}
+
+async function testConnection() {
+  msg("جاري اختبار الاتصال...");
+
+  if (!initSupabase()) return;
+
+  try {
+    const result = await supabaseClient.auth.getSession();
+
+    if (result.error) {
+      msg("الاتصال وصل لكن فيه خطأ: " + result.error.message, "bad");
+      return;
+    }
+
+    msg("الاتصال بـ Supabase شغال ✅\nجرّب الآن إنشاء حساب جديد.", "ok");
+  } catch (e) {
+    msg("فشل الاتصال: " + e.message, "bad");
+  }
+}
+
+async function signup() {
+  msg("جاري إنشاء الحساب...");
+
+  if (!initSupabase()) return;
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (!email || !password) {
+    msg("اكتب الإيميل والباسورد.", "bad");
+    return;
+  }
+
+  if (password.length < 6) {
+    msg("الباسورد لازم يكون 6 حروف أو أرقام على الأقل.", "bad");
+    return;
+  }
+
+  try {
+    const result = await supabaseClient.auth.signUp({
+      email: email,
+      password: password
+    });
+
+    if (result.error) {
+      msg("فشل إنشاء الحساب: " + result.error.message, "bad");
+      return;
+    }
+
+    msg("تم إرسال طلب إنشاء الحساب ✅\nافتح Supabase > Authentication > Users وتأكد هل الإيميل ظهر.\nلو ظهر، يبقى التسجيل شغال. بعدها فعل الاشتراك active.", "ok");
+  } catch (e) {
+    msg("خطأ غير متوقع أثناء إنشاء الحساب: " + e.message, "bad");
+  }
+}
+
+async function login() {
+  msg("جاري تسجيل الدخول...");
+
+  if (!initSupabase()) return;
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (!email || !password) {
+    msg("اكتب الإيميل والباسورد.", "bad");
+    return;
+  }
+
+  try {
+    const result = await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+    if (result.error) {
+      msg("فشل تسجيل الدخول: " + result.error.message, "bad");
+      return;
+    }
+
+    msg("تم تسجيل الدخول بنجاح ✅\nسيتم تحويلك إلى index.html الآن...", "ok");
+
+    setTimeout(function () {
+      window.location.href = "index.html";
+    }, 1000);
+
+  } catch (e) {
+    msg("خطأ غير متوقع أثناء تسجيل الدخول: " + e.message, "bad");
+  }
+}
+
+document.getElementById("checkBtn").addEventListener("click", testConnection);
+document.getElementById("signupBtn").addEventListener("click", signup);
+document.getElementById("loginBtn").addEventListener("click", login);
+
+window.addEventListener("load", function () {
+  msg("الصفحة اشتغلت ✅\nاضغط اختبار الاتصال بـ Supabase الأول.");
+});
+</script>
+
+</body>
+</html>
