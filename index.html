@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanawya AI Study Pro</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+    }
+
+    header {
+      background: #111827;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logout {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .message {
+      max-width: 650px;
+      margin: 60px auto;
+      background: white;
+      padding: 25px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    }
+
+    .message p {
+      line-height: 1.8;
+      color: #4b5563;
+    }
+
+    iframe {
+      width: 100%;
+      height: calc(100vh - 70px);
+      border: none;
+      display: none;
+      background: white;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <strong>Thanawya AI Study Pro</strong>
+  <button class="logout" onclick="logout()">تسجيل خروج</button>
+</header>
+
+<div id="statusBox" class="message">
+  <h2>جاري التحقق...</h2>
+  <p>برجاء الانتظار</p>
+</div>
+
+<iframe id="pdfViewer"></iframe>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = "PUT_YOUR_SUPABASE_PROJECT_URL_HERE";
+const SUPABASE_ANON_KEY = "PUT_YOUR_SUPABASE_ANON_KEY_HERE";
+
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+const PDF_BUCKET = "course-files";
+const PDF_PATH = "thanawya-study-pro.pdf";
+
+function showMessage(title, text) {
+  document.getElementById("statusBox").style.display = "block";
+  document.getElementById("statusBox").innerHTML = `
+    <h2>${title}</h2>
+    <p>${text}</p>
+  `;
+}
+
+function getDeviceId() {
+  let deviceId = localStorage.getItem("thanawya_device_id");
+
+  if (!deviceId) {
+    deviceId = crypto.randomUUID();
+    localStorage.setItem("thanawya_device_id", deviceId);
+  }
+
+  return deviceId;
+}
+
+function checkSupabaseSettings() {
+  if (
+    SUPABASE_URL.includes("PUT_YOUR") ||
+    SUPABASE_ANON_KEY.includes("PUT_YOUR")
+  ) {
+    showMessage(
+      "بيانات Supabase ناقصة",
+      "لازم تحط Supabase URL و anon key داخل index.html."
+    );
+    return false;
+  }
+
+  return true;
+}
+
+async function protectPage() {
+  if (!checkSupabaseSettings()) return;
+
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+
+  if (userError || !userData.user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  const deviceId = getDeviceId();
+  const userAgent = navigator.userAgent;
+
+  const { data, error } = await supabase.rpc("check_access_one_device", {
+    p_device_id: deviceId,
+    p_user_agent: userAgent
+  });
+
+  if (error) {
+    showMessage("خطأ في التحقق", error.message);
+    return;
+  }
+
+  if (!data.allowed) {
+    if (data.reason === "subscription_not_active") {
+      window.location.href = "subscribe.html";
+      return;
+    }
+
+    if (data.reason === "another_device_detected") {
+      showMessage(
+        "تم رفض الدخول",
+        "هذا الحساب مربوط بجهاز آخر. تواصل مع الإدارة لتغيير الجهاز."
+      );
+      return;
+    }
+
+    window.location.href = "login.html";
+    return;
+  }
+
+  loadPDF();
+}
+
+async function loadPDF() {
+  const { data, error } = await supabase
+    .storage
+    .from(PDF_BUCKET)
+    .createSignedUrl(PDF_PATH, 60);
+
+  if (error || !data.signedUrl) {
+    showMessage(
+      "تعذر فتح الملف",
+      "تأكد أن ملف PDF مرفوع في Supabase Storage وأن اسم الملف صحيح."
+    );
+    return;
+  }
+
+  document.getElementById("statusBox").style.display = "none";
+
+  const viewer = document.getElementById("pdfViewer");
+  viewer.style.display = "block";
+  viewer.src = data.signedUrl + "#toolbar=0";
+}
+
+async function logout() {
+  await supabase.auth.signOut();
+  window.location.href = "login.html";
+}
+
+protectPage();
+</script>
+
+</body>
+</html>
