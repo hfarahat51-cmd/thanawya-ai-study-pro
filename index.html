@@ -1,53 +1,90 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Thanawya AI Study Pro</title>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background: #f3f4f6;
+      color: #111827;
+      overflow: hidden;
     }
 
     header {
+      height: 64px;
       background: #111827;
       color: white;
-      padding: 15px 20px;
+      padding: 0 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: white;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
     }
 
     .logout {
-      background: #ef4444;
-      color: white;
       border: none;
       padding: 10px 14px;
-      border-radius: 8px;
+      border-radius: 10px;
+      background: #ef4444;
+      color: white;
       cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
     }
 
     .message {
-      max-width: 650px;
-      margin: 60px auto;
+      max-width: 720px;
+      margin: 48px auto;
       background: white;
-      padding: 25px;
-      border-radius: 16px;
+      padding: 28px;
+      border-radius: 18px;
       text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      box-shadow: 0 16px 40px rgba(17,24,39,0.10);
+      line-height: 1.8;
+    }
+
+    .message h2 {
+      margin-top: 0;
+      color: #111827;
     }
 
     .message p {
-      line-height: 1.8;
       color: #4b5563;
+      white-space: pre-line;
     }
 
     iframe {
       width: 100%;
-      height: calc(100vh - 70px);
+      height: calc(100vh - 64px);
       border: none;
       display: none;
       background: white;
@@ -58,13 +95,17 @@
 <body>
 
 <header>
-  <strong>Thanawya AI Study Pro</strong>
+  <div class="brand">
+    <div class="badge">AI</div>
+    <span>Thanawya AI Study Pro</span>
+  </div>
+
   <button class="logout" onclick="logout()">تسجيل خروج</button>
 </header>
 
 <div id="statusBox" class="message">
-  <h2>جاري التحقق...</h2>
-  <p>برجاء الانتظار</p>
+  <h2>جاري التحميل...</h2>
+  <p>يتم الآن التحقق من الحساب والاشتراك والجهاز.</p>
 </div>
 
 <iframe id="pdfViewer"></iframe>
@@ -72,23 +113,23 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
+/* ضع بيانات Supabase هنا */
 const SUPABASE_URL = "https://jbwqvlssznqldgobhfrz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impid3F2bHNzem5xbGRnb2JoZnJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjcxNTcsImV4cCI6MjA5NTQwMzE1N30.FgZHutH0GbXjM4fhhN7JgfIBZKL6PzjSzflGb8nK8-Q";
 
-const supabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
-
+/*
+  إعدادات PDF
+  لو index-debug قالك مسار PDF مختلف، غيّر PDF_PATH هنا.
+*/
 const PDF_BUCKET = "course-files";
 const PDF_PATH = "thanawya-study-pro.pdf";
 
+let supabaseClient = null;
+
 function showMessage(title, text) {
-  document.getElementById("statusBox").style.display = "block";
-  document.getElementById("statusBox").innerHTML = `
-    <h2>${title}</h2>
-    <p>${text}</p>
-  `;
+  const box = document.getElementById("statusBox");
+  box.style.display = "block";
+  box.innerHTML = "<h2>" + title + "</h2><p>" + text + "</p>";
 }
 
 function getDeviceId() {
@@ -102,54 +143,53 @@ function getDeviceId() {
   return deviceId;
 }
 
-function checkSupabaseSettings() {
-  if (
-    SUPABASE_URL.includes("PUT_YOUR") ||
-    SUPABASE_ANON_KEY.includes("PUT_YOUR")
-  ) {
-    showMessage(
-      "بيانات Supabase ناقصة",
-      "لازم تحط Supabase URL و anon key داخل index.html."
-    );
+function initSupabase() {
+  if (!window.supabase) {
+    showMessage("تعذر تحميل النظام", "تأكد من اتصال الإنترنت ثم أعد فتح الصفحة.");
     return false;
   }
 
+  if (SUPABASE_URL.includes("PUT_YOUR") || SUPABASE_ANON_KEY.includes("PUT_YOUR")) {
+    showMessage("بيانات الاتصال غير مكتملة", "تواصل مع إدارة المنصة.");
+    return false;
+  }
+
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   return true;
 }
 
 async function protectPage() {
-  if (!checkSupabaseSettings()) return;
+  if (!initSupabase()) return;
 
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const userResult = await supabaseClient.auth.getUser();
 
-  if (userError || !userData.user) {
+  if (userResult.error || !userResult.data.user) {
     window.location.href = "login.html";
     return;
   }
 
-  const deviceId = getDeviceId();
-  const userAgent = navigator.userAgent;
-
-  const { data, error } = await supabase.rpc("check_access_one_device", {
-    p_device_id: deviceId,
-    p_user_agent: userAgent
+  const accessResult = await supabaseClient.rpc("check_access_one_device", {
+    p_device_id: getDeviceId(),
+    p_user_agent: navigator.userAgent
   });
 
-  if (error) {
-    showMessage("خطأ في التحقق", error.message);
+  if (accessResult.error) {
+    showMessage("حدث خطأ في التحقق", "أعد المحاولة أو تواصل مع إدارة المنصة.");
     return;
   }
 
-  if (!data.allowed) {
-    if (data.reason === "subscription_not_active") {
+  const access = accessResult.data;
+
+  if (!access || access.allowed !== true) {
+    if (access && access.reason === "subscription_not_active") {
       window.location.href = "subscribe.html";
       return;
     }
 
-    if (data.reason === "another_device_detected") {
+    if (access && access.reason === "another_device_detected") {
       showMessage(
         "تم رفض الدخول",
-        "هذا الحساب مربوط بجهاز آخر. تواصل مع الإدارة لتغيير الجهاز."
+        "هذا الحساب مربوط بجهاز آخر.\nتواصل مع الإدارة لتغيير الجهاز."
       );
       return;
     }
@@ -158,19 +198,53 @@ async function protectPage() {
     return;
   }
 
-  loadPDF();
+  await loadPDF();
+}
+
+async function createSignedUrlForPath(path) {
+  return await supabaseClient
+    .storage
+    .from(PDF_BUCKET)
+    .createSignedUrl(path, 120);
+}
+
+async function findFirstPdfInBucket() {
+  const listResult = await supabaseClient
+    .storage
+    .from(PDF_BUCKET)
+    .list("", {
+      limit: 100,
+      offset: 0,
+      sortBy: { column: "name", order: "asc" }
+    });
+
+  if (listResult.error || !listResult.data) return null;
+
+  const pdfFile = listResult.data.find(function (item) {
+    return item.name && item.name.toLowerCase().endsWith(".pdf");
+  });
+
+  if (!pdfFile) return null;
+  return pdfFile.name;
 }
 
 async function loadPDF() {
-  const { data, error } = await supabase
-    .storage
-    .from(PDF_BUCKET)
-    .createSignedUrl(PDF_PATH, 60);
+  showMessage("جاري فتح المحتوى...", "برجاء الانتظار.");
 
-  if (error || !data.signedUrl) {
+  let signedResult = await createSignedUrlForPath(PDF_PATH);
+
+  if (signedResult.error || !signedResult.data || !signedResult.data.signedUrl) {
+    const fallbackPath = await findFirstPdfInBucket();
+
+    if (fallbackPath) {
+      signedResult = await createSignedUrlForPath(fallbackPath);
+    }
+  }
+
+  if (signedResult.error || !signedResult.data || !signedResult.data.signedUrl) {
     showMessage(
-      "تعذر فتح الملف",
-      "تأكد أن ملف PDF مرفوع في Supabase Storage وأن اسم الملف صحيح."
+      "تعذر فتح المحتوى",
+      "حسابك مفعل، لكن لم يتم العثور على ملف المحتوى.\nتواصل مع إدارة المنصة."
     );
     return;
   }
@@ -179,11 +253,18 @@ async function loadPDF() {
 
   const viewer = document.getElementById("pdfViewer");
   viewer.style.display = "block";
-  viewer.src = data.signedUrl + "#toolbar=0";
+  viewer.src = signedResult.data.signedUrl + "#toolbar=0";
 }
 
 async function logout() {
-  await supabase.auth.signOut();
+  if (!supabaseClient && window.supabase) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+
+  if (supabaseClient) {
+    await supabaseClient.auth.signOut();
+  }
+
   window.location.href = "login.html";
 }
 

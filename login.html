@@ -3,154 +3,231 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>تسجيل الدخول - Thanawya AI Study Pro</title>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
+      margin: 0;
+      min-height: 100vh;
       font-family: Arial, sans-serif;
-      background: #f5f7fb;
+      background:
+        radial-gradient(circle at top right, rgba(37,99,235,0.22), transparent 30%),
+        radial-gradient(circle at bottom left, rgba(17,24,39,0.18), transparent 30%),
+        #f5f7fb;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-    }
-
-    .box {
-      background: white;
-      width: 360px;
-      max-width: 90%;
-      padding: 25px;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-
-    h2 {
-      margin-bottom: 8px;
+      padding: 18px;
       color: #111827;
     }
 
-    p {
-      color: #555;
+    .card {
+      width: 410px;
+      max-width: 100%;
+      background: white;
+      border-radius: 22px;
+      padding: 28px;
+      box-shadow: 0 18px 45px rgba(17, 24, 39, 0.14);
+      text-align: center;
+    }
+
+    .brand {
+      width: 62px;
+      height: 62px;
+      border-radius: 18px;
+      background: #111827;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      color: #111827;
+    }
+
+    .subtitle {
+      margin: 9px 0 22px;
+      color: #6b7280;
       font-size: 14px;
+      line-height: 1.7;
     }
 
     input {
       width: 100%;
-      padding: 13px;
+      padding: 14px 15px;
       margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      box-sizing: border-box;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
       font-size: 15px;
+      direction: ltr;
+      text-align: left;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
     }
 
     button {
       width: 100%;
-      padding: 13px;
+      padding: 14px;
       margin-top: 10px;
       border: none;
-      border-radius: 10px;
-      background: #111827;
+      border-radius: 12px;
       color: white;
       font-size: 16px;
+      font-weight: bold;
       cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease;
     }
 
     button:hover {
-      opacity: 0.9;
+      opacity: 0.95;
+      transform: translateY(-1px);
     }
 
-    .secondary {
+    .login-btn {
+      background: #111827;
+    }
+
+    .signup-btn {
       background: #2563eb;
     }
 
     #message {
-      min-height: 20px;
       margin-top: 15px;
-      color: #b91c1c;
+      min-height: 22px;
       font-size: 14px;
+      line-height: 1.8;
+      color: #374151;
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 11px;
+      white-space: pre-line;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: #6b7280;
+      font-size: 12px;
+      line-height: 1.7;
     }
   </style>
 </head>
 
 <body>
 
-<div class="box">
-  <h2>Thanawya AI Study Pro</h2>
-  <p>ادخل بالإيميل والباسورد</p>
+<div class="card">
+  <div class="brand">AI</div>
 
-  <input id="email" type="email" placeholder="الإيميل" />
-  <input id="password" type="password" placeholder="الباسورد" />
+  <h1>Thanawya AI Study Pro</h1>
+  <p class="subtitle">
+    سجل دخولك للوصول إلى محتوى المنصة.
+    <br>
+    الحساب يعمل على جهاز واحد فقط.
+  </p>
 
-  <button onclick="login()">دخول</button>
-  <button class="secondary" onclick="signup()">إنشاء حساب جديد</button>
+  <input id="email" type="email" placeholder="Email" autocomplete="email" />
+  <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
 
-  <p id="message"></p>
+  <button class="login-btn" onclick="login()">تسجيل الدخول</button>
+  <button class="signup-btn" onclick="signup()">إنشاء حساب جديد</button>
+
+  <div id="message">جاهز لتسجيل الدخول.</div>
+
+  <div class="footer-note">
+    لو حسابك غير مفعل، تواصل مع الإدارة بعد إنشاء الحساب.
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-/*
-  مهم:
-  غير السطرين دول ببيانات مشروع Supabase بتاعك.
-  هتلاقيهم في:
-  Supabase > Project Settings > API
-*/
-const SUPABASE_URL = "https://xxxxxxxxxxxx.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIs...";
+/* ضع بيانات Supabase هنا */
+const SUPABASE_URL = "https://jbwqvlssznqldgobhfrz.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impid3F2bHNzem5xbGRnb2JoZnJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjcxNTcsImV4cCI6MjA5NTQwMzE1N30.FgZHutH0GbXjM4fhhN7JgfIBZKL6PzjSzflGb8nK8-Q";
 
-const supabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 function showMessage(text) {
-  document.getElementById("message").innerText = text;
+  document.getElementById("message").textContent = text;
+}
+
+function settingsReady() {
+  if (SUPABASE_URL.includes("PUT_YOUR") || SUPABASE_ANON_KEY.includes("PUT_YOUR")) {
+    showMessage("بيانات الاتصال غير مكتملة. تواصل مع الإدارة.");
+    return false;
+  }
+  return true;
 }
 
 async function signup() {
+  if (!settingsReady()) return;
+
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
 
   if (!email || !password) {
-    showMessage("اكتب الإيميل والباسورد");
+    showMessage("اكتب الإيميل والباسورد.");
     return;
   }
 
-  const { error } = await supabase.auth.signUp({
+  if (password.length < 6) {
+    showMessage("الباسورد لازم يكون 6 حروف أو أرقام على الأقل.");
+    return;
+  }
+
+  showMessage("جاري إنشاء الحساب...");
+
+  const result = await supabase.auth.signUp({
     email: email,
     password: password
   });
 
-  if (error) {
-    showMessage(error.message);
-  } else {
-    showMessage("تم إنشاء الحساب. انتظر تفعيل الاشتراك من الإدارة.");
+  if (result.error) {
+    showMessage("لم يتم إنشاء الحساب: " + result.error.message);
+    return;
   }
+
+  showMessage("تم إنشاء الحساب بنجاح. انتظر تفعيل الاشتراك من الإدارة ثم اضغط تسجيل الدخول.");
 }
 
 async function login() {
+  if (!settingsReady()) return;
+
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
 
   if (!email || !password) {
-    showMessage("اكتب الإيميل والباسورد");
+    showMessage("اكتب الإيميل والباسورد.");
     return;
   }
 
-  const { error } = await supabase.auth.signInWithPassword({
+  showMessage("جاري تسجيل الدخول...");
+
+  const result = await supabase.auth.signInWithPassword({
     email: email,
     password: password
   });
 
-  if (error) {
-    showMessage("الإيميل أو الباسورد غير صحيح");
-  } else {
-    window.location.href = "index.html";
+  if (result.error) {
+    showMessage("فشل تسجيل الدخول: " + result.error.message);
+    return;
   }
+
+  window.location.href = "index.html";
 }
 </script>
 
