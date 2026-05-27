@@ -1,1 +1,0 @@
-# thanawya-ai-study-pro
