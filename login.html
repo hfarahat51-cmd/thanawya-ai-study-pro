@@ -27,7 +27,7 @@
     }
 
     .card {
-      width: 410px;
+      width: 420px;
       max-width: 100%;
       background: white;
       border-radius: 22px;
@@ -37,8 +37,8 @@
     }
 
     .brand {
-      width: 62px;
-      height: 62px;
+      width: 64px;
+      height: 64px;
       border-radius: 18px;
       background: #111827;
       color: white;
@@ -106,6 +106,12 @@
       background: #2563eb;
     }
 
+    .test-btn {
+      background: #6b7280;
+      font-size: 13px;
+      padding: 12px;
+    }
+
     #message {
       margin-top: 15px;
       min-height: 22px;
@@ -116,6 +122,8 @@
       border-radius: 12px;
       padding: 11px;
       white-space: pre-line;
+      direction: rtl;
+      text-align: center;
     }
 
     .footer-note {
@@ -142,8 +150,9 @@
   <input id="email" type="email" placeholder="Email" autocomplete="email" />
   <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
 
-  <button class="login-btn" onclick="login()">تسجيل الدخول</button>
-  <button class="signup-btn" onclick="signup()">إنشاء حساب جديد</button>
+  <button id="loginBtn" class="login-btn" type="button">تسجيل الدخول</button>
+  <button id="signupBtn" class="signup-btn" type="button">إنشاء حساب جديد</button>
+  <button id="testBtn" class="test-btn" type="button">اختبار الاتصال</button>
 
   <div id="message">جاهز لتسجيل الدخول.</div>
 
@@ -155,26 +164,53 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-/* ضع بيانات Supabase هنا */
 const SUPABASE_URL = "https://jbwqvlssznqldgobhfrz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impid3F2bHNzem5xbGRnb2JoZnJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MjcxNTcsImV4cCI6MjA5NTQwMzE1N30.FgZHutH0GbXjM4fhhN7JgfIBZKL6PzjSzflGb8nK8-Q";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let supabaseClient = null;
 
 function showMessage(text) {
   document.getElementById("message").textContent = text;
 }
 
-function settingsReady() {
-  if (SUPABASE_URL.includes("PUT_YOUR") || SUPABASE_ANON_KEY.includes("PUT_YOUR")) {
-    showMessage("بيانات الاتصال غير مكتملة. تواصل مع الإدارة.");
+function initSupabase() {
+  try {
+    if (!window.supabase) {
+      showMessage("مكتبة Supabase لم يتم تحميلها. تأكد من الإنترنت وأعد فتح الصفحة.");
+      return false;
+    }
+
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return true;
+  } catch (error) {
+    showMessage("خطأ في تشغيل الاتصال: " + error.message);
     return false;
   }
-  return true;
+}
+
+async function testConnection() {
+  showMessage("جاري اختبار الاتصال...");
+
+  if (!initSupabase()) return;
+
+  try {
+    const result = await supabaseClient.auth.getSession();
+
+    if (result.error) {
+      showMessage("فشل الاتصال: " + result.error.message);
+      return;
+    }
+
+    showMessage("الاتصال شغال ✅\nجرّب تسجيل الدخول أو إنشاء حساب.");
+  } catch (error) {
+    showMessage("خطأ أثناء اختبار الاتصال: " + error.message);
+  }
 }
 
 async function signup() {
-  if (!settingsReady()) return;
+  showMessage("جاري إنشاء الحساب...");
+
+  if (!initSupabase()) return;
 
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
@@ -189,23 +225,27 @@ async function signup() {
     return;
   }
 
-  showMessage("جاري إنشاء الحساب...");
+  try {
+    const result = await supabaseClient.auth.signUp({
+      email: email,
+      password: password
+    });
 
-  const result = await supabase.auth.signUp({
-    email: email,
-    password: password
-  });
+    if (result.error) {
+      showMessage("لم يتم إنشاء الحساب: " + result.error.message);
+      return;
+    }
 
-  if (result.error) {
-    showMessage("لم يتم إنشاء الحساب: " + result.error.message);
-    return;
+    showMessage("تم إنشاء الحساب بنجاح ✅\nانتظر تفعيل الاشتراك من الإدارة، ثم اضغط تسجيل الدخول.");
+  } catch (error) {
+    showMessage("خطأ أثناء إنشاء الحساب: " + error.message);
   }
-
-  showMessage("تم إنشاء الحساب بنجاح. انتظر تفعيل الاشتراك من الإدارة ثم اضغط تسجيل الدخول.");
 }
 
 async function login() {
-  if (!settingsReady()) return;
+  showMessage("جاري تسجيل الدخول...");
+
+  if (!initSupabase()) return;
 
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
@@ -215,20 +255,35 @@ async function login() {
     return;
   }
 
-  showMessage("جاري تسجيل الدخول...");
+  try {
+    const result = await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
 
-  const result = await supabase.auth.signInWithPassword({
-    email: email,
-    password: password
-  });
+    if (result.error) {
+      showMessage("فشل تسجيل الدخول: " + result.error.message);
+      return;
+    }
 
-  if (result.error) {
-    showMessage("فشل تسجيل الدخول: " + result.error.message);
-    return;
+    showMessage("تم تسجيل الدخول بنجاح ✅\nجاري فتح المنصة...");
+
+    setTimeout(function () {
+      window.location.href = "index.html?v=" + Date.now();
+    }, 700);
+
+  } catch (error) {
+    showMessage("خطأ أثناء تسجيل الدخول: " + error.message);
   }
-
-  window.location.href = "index.html";
 }
+
+document.getElementById("loginBtn").addEventListener("click", login);
+document.getElementById("signupBtn").addEventListener("click", signup);
+document.getElementById("testBtn").addEventListener("click", testConnection);
+
+window.addEventListener("load", function () {
+  initSupabase();
+});
 </script>
 
 </body>
